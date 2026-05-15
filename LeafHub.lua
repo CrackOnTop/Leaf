@@ -10087,11 +10087,11 @@ local function LeafSailorPiece()
             return nil
         end
         if SelectedFarmType == 'Below' then
-            return CFrame.new(TargetCF.Position - Vector3.new(0, FarmDistance, 0))
+            return CFrame.new(TargetCF.Position - Vector3.new(0, FarmDistance, 0), TargetCF.Position)
         elseif SelectedFarmType == 'Behind' then
-            return TargetCF * CFrame.new(0, 0, FarmDistance)
+            return CFrame.new((TargetCF * CFrame.new(0, 0, FarmDistance)).Position, TargetCF.Position)
         end
-        return CFrame.new(TargetCF.Position + Vector3.new(0, FarmDistance, 0))
+        return CFrame.new(TargetCF.Position + Vector3.new(0, FarmDistance, 0), TargetCF.Position) * CFrame.Angles(math.rad(-90), 0, 0)
     end
     local function IsTargetName(Target, Name)
         if not Target or not Name or Name == '' then
@@ -10957,7 +10957,7 @@ local function LeafKingLegacy()
     local Sea2 = game.PlaceId == 6381829480
     local Sea3 = game.PlaceId == 15759515082
     local TweenSpeed = 250
-    local FarmDistance = 10
+    local FarmDistance = 12
     local FarmPosition = 'Above'
     local SelectedWeapon = 'Melee'
     local SelectedSkills = {'Z', 'X', 'C', 'V'}
@@ -11324,9 +11324,10 @@ local function LeafKingLegacy()
     end
     local function FarmCFrame(Mob)
         if not Alive(Mob) then return nil end
-        if FarmPosition == 'Behind' then return Mob.HumanoidRootPart.CFrame * CFrame.new(0, 0, FarmDistance) end
-        if FarmPosition == 'Below' then return Mob.HumanoidRootPart.CFrame * CFrame.new(0, -FarmDistance, 0) end
-        return Mob.HumanoidRootPart.CFrame * CFrame.new(0, FarmDistance, 0)
+        local Root = Mob.HumanoidRootPart
+        if FarmPosition == 'Behind' then return CFrame.new((Root.CFrame * CFrame.new(0, 0, FarmDistance)).Position, Root.Position) end
+        if FarmPosition == 'Below' then return CFrame.new(Root.Position - Vector3.new(0, FarmDistance, 0), Root.Position) end
+        return CFrame.new(Root.Position + Vector3.new(0, FarmDistance, 0), Root.Position) * CFrame.Angles(math.rad(-90), 0, 0)
     end
     local function MoveAttack(Mob)
         if Alive(Mob) then
@@ -11414,8 +11415,40 @@ local function LeafKingLegacy()
             end
         end
     end
+    local function AutoHakiV2()
+        local NPC = Workspace:FindFirstChild('AllNPC') and Workspace.AllNPC:FindFirstChild('LeePung')
+        if NPC then
+            Tween(NPC.CFrame * CFrame.new(0, 0, -3))
+            pcall(function()
+                ReplicatedStorage.Chest.Remotes.Functions.EtcFunction:InvokeServer('HakiQuest')
+            end)
+        end
+    end
+    local function AutoObservationV2()
+        local NPC = Workspace:FindFirstChild('AllNPC') and (Workspace.AllNPC:FindFirstChild('Stranger Uncle') or Workspace.AllNPC:FindFirstChild('Observation V2'))
+        if NPC then
+            Tween(NPC.CFrame * CFrame.new(0, 0, -3))
+            pcall(function()
+                ReplicatedStorage.Chest.Remotes.Functions.EtcFunction:InvokeServer('KenHakiV2')
+            end)
+        end
+    end
+    local function EquipAccessory(Name)
+        if Name and Name ~= '' then
+            pcall(function()
+                ReplicatedStorage.Chest.Remotes.Functions.AccessoryEq:InvokeServer(Name)
+            end)
+        end
+    end
+    local function SpawnJackOLantern()
+        local NPC = Workspace:FindFirstChild('AllNPC') and Workspace.AllNPC:FindFirstChild('SummonJackolantern')
+        if NPC then
+            TouchNpc('SummonJackolantern')
+        end
+    end
     Tabs.General:Dropdown({Title = 'Weapon', Values = {'Melee', 'Sword', 'Fruit'}, Value = 'Melee', Multi = false, Callback = function(Value) SelectedWeapon = Value end})
     Tabs.General:Dropdown({Title = 'Farm Position', Values = {'Above', 'Behind', 'Below'}, Value = 'Above', Multi = false, Callback = function(Value) FarmPosition = Value end})
+    Tabs.General:Slider({Title = 'Distance', Value = {Min = 3, Max = 40, Default = FarmDistance}, Callback = function(Value) FarmDistance = tonumber(Value) or FarmDistance end})
     Tabs.General:Dropdown({Title = 'Skills', Values = {'Z', 'X', 'C', 'V', 'B', 'E'}, Value = {'Z', 'X', 'C', 'V'}, Multi = true, Callback = function(Value)
         SelectedSkills = {}
         for Key, Enabled in pairs(Value or {}) do
@@ -11431,8 +11464,15 @@ local function LeafKingLegacy()
         Tab:Toggle({Title = Name, Value = false, Callback = function(Value) Flags[Name] = Value end})
     end
     Tabs.Sea:Toggle({Title = 'Collect Sea Chest', Value = false, Callback = function(Value) Flags.SeaChest = Value end})
+    if Sea2 then
+        Tabs.Sea:Toggle({Title = 'Auto Haki V2', Value = false, Callback = function(Value) Flags.AutoHakiV2 = Value end})
+        Tabs.Sea:Toggle({Title = 'Auto Observation V2', Value = false, Callback = function(Value) Flags.AutoObservationV2 = Value end})
+    end
+    Tabs.Boss:Toggle({Title = 'Auto Spawn Jack O Lantern', Value = false, Callback = function(Value) Flags.AutoSpawnJack = Value end})
     Tabs.Misc:Dropdown({Title = 'Material', Values = {'Log', 'Pile of Bones', 'Fresh Fish', "Angellic's Feather", "Sea King's Blood", 'Candy'}, Value = 'Log', Multi = false, Callback = function(Value) Flags.MaterialName = Value end})
     Tabs.Misc:Toggle({Title = 'Auto Farm Material', Value = false, Callback = function(Value) Flags.AutoMaterial = Value end})
+    Tabs.Misc:Dropdown({Title = 'Accessory', Values = (function() local List = {} for _, Accessory in ipairs(LocalPlayer:FindFirstChild('Accessories') and LocalPlayer.Accessories:GetChildren() or {}) do List[#List + 1] = Accessory.Name end return List end)(), Value = '', Multi = false, Callback = function(Value) Flags.AccessoryName = Value end})
+    Tabs.Misc:Toggle({Title = 'Auto Equip Accessory', Value = false, Callback = function(Value) Flags.AutoAccessory = Value end})
     Tabs.Misc:Button({Title = 'Auto Accept Game', Callback = function() pcall(function() ReplicatedStorage.Chest.Remotes.Functions.EtcFunction:InvokeServer('EnterTheGame', {}) end) end})
     if Sea1 then Tabs.Travel:Button({Title = 'Current Sea 1', Callback = function() end}) end
     if Sea2 then Tabs.Travel:Button({Title = 'Current Sea 2', Callback = function() end}) end
@@ -11470,6 +11510,10 @@ local function LeafKingLegacy()
                 if Flags.AutoSea3 then FarmAutoSea3() end
                 if Flags.SeaChest then CollectSeaChest() end
                 if Flags.AutoMaterial and Flags.MaterialName and MaterialTargets[Flags.MaterialName] then FarmNamed(MaterialTargets[Flags.MaterialName]) end
+                if Flags.AutoAccessory then EquipAccessory(Flags.AccessoryName) end
+                if Flags.AutoHakiV2 then AutoHakiV2() end
+                if Flags.AutoObservationV2 then AutoObservationV2() end
+                if Flags.AutoSpawnJack then SpawnJackOLantern() end
                 for Name, Targets in pairs(BossTargets) do
                     if Flags[Name] then FarmNamed(Targets) end
                 end
