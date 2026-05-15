@@ -9691,10 +9691,36 @@ local function LeafSailorPiece()
         end
         local Distance = (Root.Position - TargetCF.Position).Magnitude
         if Distance <= TargetDistance then
-            StopTween()
-            Root.CFrame = TargetCF
+            if CurrentTween then
+                CurrentTween:Cancel()
+                CurrentTween = nil
+            end
+            if CurrentTweenConnection then
+                CurrentTweenConnection:Disconnect()
+                CurrentTweenConnection = nil
+            end
+            if CurrentTweenCompleted then
+                CurrentTweenCompleted:Disconnect()
+                CurrentTweenCompleted = nil
+            end
+            CurrentTweenTarget = TargetCF
+            ApplyNoclip()
+            local BodyClip = Root:FindFirstChild('LeafSailorBodyClip')
+            if not BodyClip then
+                BodyClip = Instance.new('BodyVelocity')
+                BodyClip.Name = 'LeafSailorBodyClip'
+                BodyClip.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+                BodyClip.Velocity = Vector3.zero
+                BodyClip.Parent = Root
+            end
+            if (Root.Position - TargetCF.Position).Magnitude > 1.25 then
+                Root.CFrame = TargetCF
+            end
             Root.AssemblyLinearVelocity = Vector3.zero
             Root.AssemblyAngularVelocity = Vector3.zero
+            Humanoid.PlatformStand = true
+            Humanoid.Sit = false
+            Humanoid:ChangeState(11)
             return
         end
         if CurrentTweenTarget and (CurrentTweenTarget.Position - TargetCF.Position).Magnitude <= 5 and CurrentTween and CurrentTween.PlaybackState == Enum.PlaybackState.Playing then
@@ -10086,12 +10112,13 @@ local function LeafSailorPiece()
         if not TargetCF then
             return nil
         end
+        local Position = TargetCF.Position
         if SelectedFarmType == 'Below' then
-            return CFrame.new(TargetCF.Position - Vector3.new(0, FarmDistance, 0), TargetCF.Position)
+            return CFrame.new(Position - Vector3.new(0, FarmDistance, 0)) * CFrame.Angles(math.rad(90), 0, 0)
         elseif SelectedFarmType == 'Behind' then
-            return CFrame.new((TargetCF * CFrame.new(0, 0, FarmDistance)).Position, TargetCF.Position)
+            return CFrame.new((TargetCF * CFrame.new(0, 0, FarmDistance)).Position, Position)
         end
-        return CFrame.new(TargetCF.Position + Vector3.new(0, FarmDistance, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
+        return CFrame.new(Position + Vector3.new(0, FarmDistance, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
     end
     local function IsTargetName(Target, Name)
         if not Target or not Name or Name == '' then
@@ -11165,9 +11192,23 @@ local function LeafKingLegacy()
         local Root = Char.HumanoidRootPart
         local Distance = (TargetCF.Position - Root.Position).Magnitude
         if Distance <= 35 then
-            StopTween()
-            Root.CFrame = TargetCF
-            TweenProxy.CFrame = TargetCF
+            if CurrentTween then CurrentTween:Cancel() CurrentTween = nil end
+            local BodyClip = Root:FindFirstChild('LeafKingBodyClip') or Instance.new('BodyVelocity')
+            BodyClip.Name = 'LeafKingBodyClip'
+            BodyClip.MaxForce = Vector3.new(100000, 100000, 100000)
+            BodyClip.Velocity = Vector3.zero
+            BodyClip.Parent = Root
+            if (Root.Position - TargetCF.Position).Magnitude > 1.25 then
+                Root.CFrame = TargetCF
+            end
+            Root.Velocity = Vector3.zero
+            Root.AssemblyLinearVelocity = Vector3.zero
+            Char.Humanoid.PlatformStand = true
+            Char.Humanoid.Sit = false
+            Char.Humanoid:ChangeState(11)
+            if TweenProxy then TweenProxy.CFrame = TargetCF end
+            LastTweenPosition = TargetCF.Position
+            LastTweenTick = tick()
             return
         end
         if CurrentTween then CurrentTween:Cancel() CurrentTween = nil end
@@ -11339,9 +11380,10 @@ local function LeafKingLegacy()
     local function FarmCFrame(Mob)
         if not Alive(Mob) then return nil end
         local Root = Mob.HumanoidRootPart
-        if FarmPosition == 'Behind' then return CFrame.new((Root.CFrame * CFrame.new(0, 0, FarmDistance)).Position, Root.Position) end
-        if FarmPosition == 'Below' then return CFrame.new(Root.Position - Vector3.new(0, FarmDistance, 0), Root.Position) end
-        return CFrame.new(Root.Position + Vector3.new(0, FarmDistance, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
+        local Position = Root.Position
+        if FarmPosition == 'Behind' then return CFrame.new((Root.CFrame * CFrame.new(0, 0, FarmDistance)).Position, Position) end
+        if FarmPosition == 'Below' then return CFrame.new(Position - Vector3.new(0, FarmDistance, 0)) * CFrame.Angles(math.rad(90), 0, 0) end
+        return CFrame.new(Position + Vector3.new(0, FarmDistance, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
     end
     local function MoveAttack(Mob)
         if Alive(Mob) then
