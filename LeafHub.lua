@@ -10091,7 +10091,7 @@ local function LeafSailorPiece()
         elseif SelectedFarmType == 'Behind' then
             return CFrame.new((TargetCF * CFrame.new(0, 0, FarmDistance)).Position, TargetCF.Position)
         end
-        return CFrame.new(TargetCF.Position + Vector3.new(0, FarmDistance, 0), TargetCF.Position) * CFrame.Angles(math.rad(-45), 0, 0)
+        return CFrame.new(TargetCF.Position + Vector3.new(0, FarmDistance, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
     end
     local function IsTargetName(Target, Name)
         if not Target or not Name or Name == '' then
@@ -11341,7 +11341,7 @@ local function LeafKingLegacy()
         local Root = Mob.HumanoidRootPart
         if FarmPosition == 'Behind' then return CFrame.new((Root.CFrame * CFrame.new(0, 0, FarmDistance)).Position, Root.Position) end
         if FarmPosition == 'Below' then return CFrame.new(Root.Position - Vector3.new(0, FarmDistance, 0), Root.Position) end
-        return CFrame.new(Root.Position + Vector3.new(0, FarmDistance, 0), Root.Position) * CFrame.Angles(math.rad(-45), 0, 0)
+        return CFrame.new(Root.Position + Vector3.new(0, FarmDistance, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
     end
     local function MoveAttack(Mob)
         if Alive(Mob) then
