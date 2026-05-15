@@ -11060,7 +11060,7 @@ local function LeafKingLegacy()
     local Tabs = {
         Info = Window:Tab(TabOptions('Info', 'solar:info-circle-bold', Color3.fromHex('#A8D8C1'))),
         General = Window:Tab(TabOptions('General', 'solar:play-circle-bold', Color3.fromHex('#7DE8BD'))),
-        Boss = Window:Tab(TabOptions('Boss', 'solar:sword-bold', Color3.fromHex('#D98C9A'))),
+        Boss = Window:Tab(TabOptions('Boss', 'solar:crown-star-bold', Color3.fromHex('#D98C9A'))),
         Sea = Window:Tab(TabOptions('Sea Events', 'lucide:anchor', Color3.fromHex('#88B8D6'))),
         Travel = Window:Tab(TabOptions('Travel', 'solar:map-point-bold', Color3.fromHex('#D7AA7A'))),
         Misc = Window:Tab(TabOptions('Misc', 'solar:box-bold', Color3.fromHex('#9AAEA6'))),
@@ -11094,35 +11094,49 @@ local function LeafKingLegacy()
         end
     end
     local function MakeStopTweenButton()
-        local Old = GuiParent:FindFirstChild('StopTweenGui') or LocalPlayer.PlayerGui:FindFirstChild('StopTweenGui')
+        local PlayerGui = LocalPlayer:WaitForChild('PlayerGui')
+        local Old = GuiParent:FindFirstChild('StopTweenGui') or PlayerGui:FindFirstChild('StopTweenGui')
         if Old then Old:Destroy() end
         local Gui = Instance.new('ScreenGui')
         Gui.Name = 'StopTweenGui'
+        Gui.Parent = PlayerGui
+        Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
         Gui.DisplayOrder = 1
         Gui.ResetOnSpawn = false
-        Gui.Parent = LocalPlayer:WaitForChild('PlayerGui')
         local Frame = Instance.new('Frame')
+        Frame.Parent = Gui
         Frame.AnchorPoint = Vector2.new(1, 0.5)
         Frame.BackgroundColor3 = Color3.fromRGB(20, 35, 29)
         Frame.BackgroundTransparency = 0.18
         Frame.BorderSizePixel = 0
-        Frame.Position = UDim2.new(1, -10, 0.5, 0)
         Frame.Size = UDim2.new(0, 108, 0, 36)
-        Frame.Parent = Gui
-        Instance.new('UICorner', Frame).CornerRadius = UDim.new(0, 14)
+        Frame.Position = UDim2.new(1, -10, 0.5, 0)
+        Frame.Active = true
+        Frame.ClipsDescendants = true
+        local Corner = Instance.new('UICorner')
+        Corner.Parent = Frame
+        Corner.CornerRadius = UDim.new(0, 14)
         local Gradient = Instance.new('UIGradient')
-        Gradient.Rotation = 45
-        Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(24, 48, 39)), ColorSequenceKeypoint.new(0.42, Color3.fromRGB(111, 210, 168)), ColorSequenceKeypoint.new(0.68, Color3.fromRGB(220, 255, 240)), ColorSequenceKeypoint.new(1, Color3.fromRGB(28, 62, 49))})
         Gradient.Parent = Frame
+        Gradient.Rotation = 45
+        Gradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(24, 48, 39)),
+            ColorSequenceKeypoint.new(0.42, Color3.fromRGB(111, 210, 168)),
+            ColorSequenceKeypoint.new(0.68, Color3.fromRGB(220, 255, 240)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(28, 62, 49)),
+        })
         local Button = Instance.new('TextButton')
+        Button.Parent = Frame
         Button.BackgroundTransparency = 1
+        Button.Size = UDim2.new(1, -8, 1, 0)
+        Button.Position = UDim2.new(0, 4, 0, 0)
         Button.Font = Enum.Font.FredokaOne
         Button.Text = 'Stop Tween'
         Button.TextColor3 = Color3.fromRGB(246, 255, 250)
+        Button.TextStrokeTransparency = 1
+        Button.TextSize = 14
         Button.TextScaled = true
-        Button.Size = UDim2.new(1, -8, 1, 0)
-        Button.Position = UDim2.new(0, 4, 0, 0)
-        Button.Parent = Frame
+        Button.TextWrapped = false
         Button.MouseButton1Click:Connect(StopTween)
     end
     local function ToCF(Value)
