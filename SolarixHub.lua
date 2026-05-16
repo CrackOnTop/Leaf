@@ -11176,7 +11176,7 @@ local function SolarixSurviveZombie()
         EnableInitialToggleCallback(Tab)
     end
     Tabs.Info:Paragraph({
-        Title = 'Leaf Hub',
+        Title = 'Solarix Hub',
         Desc = "Press 'G' to toggle UI.",
         Color = 'Orange',
     })
