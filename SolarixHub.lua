@@ -9406,7 +9406,7 @@ local function SolarixSailorPiece()
     local LocalPlayer = Players.LocalPlayer
     local PlayerGui = LocalPlayer:WaitForChild('PlayerGui')
     local TweenSpeed = 180
-    local TargetDistance = 40
+    local TargetDistance = math.huge
     local CurrentTween = nil
     local CurrentTweenTarget = nil
     local CurrentTweenConnection = nil
