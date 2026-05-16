@@ -11067,6 +11067,7 @@ end
 local function SolarixSurviveZombie()
     local Players = game:GetService('Players')
     local RunService = game:GetService('RunService')
+    local TweenService = game:GetService('TweenService')
     local ReplicatedStorage = game:GetService('ReplicatedStorage')
     local Workspace = game:GetService('Workspace')
     local LocalPlayer = Players.LocalPlayer
@@ -11190,9 +11191,14 @@ local function SolarixSurviveZombie()
     local GunRemotes = nil
     local CachedZombies = {}
     local LastScan = 0
-    local ScanDelay = 0.05
-    local KillAuraRange = 1200
-    local KillAuraTargets = 20
+    local ScanDelay = 0.04
+    local KillAuraRange = 1500
+    local KillAuraTargets = 25
+    local FarmDistance = 24
+    local ZombieTweenSpeed = 260
+    local ActiveZombieTween = nil
+    local LastZombieTweenPosition = nil
+    local LastZombieTweenClock = 0
     local function GetPosition(Value)
         if typeof(Value) == 'Vector3' then
             return Value
@@ -11384,6 +11390,57 @@ local function SolarixSurviveZombie()
         end
         return Targets
     end
+    local function StopZombieTween()
+        if ActiveZombieTween then
+            ActiveZombieTween:Cancel()
+            ActiveZombieTween = nil
+        end
+        LastZombieTweenPosition = nil
+        LastZombieTweenClock = 0
+    end
+    local function TweenZombie(Target)
+        if not Target or not Target.Position then
+            return
+        end
+        local Character = LocalPlayer.Character
+        local Root = Character and Character:FindFirstChild('HumanoidRootPart')
+        local Humanoid = Character and Character:FindFirstChildOfClass('Humanoid')
+        if not Root or not Humanoid or Humanoid.Health <= 0 then
+            return
+        end
+        local ZombiePosition = Target.Position
+        local Direction = Root.Position - ZombiePosition
+        if Direction.Magnitude <= 1 then
+            Direction = -Root.CFrame.LookVector
+        else
+            Direction = Direction.Unit
+        end
+        local TargetPosition = ZombiePosition + Direction * FarmDistance + Vector3.new(0, 2, 0)
+        local Distance = (Root.Position - TargetPosition).Magnitude
+        if Distance <= math.max(FarmDistance * 0.35, 6) then
+            if ActiveZombieTween then
+                ActiveZombieTween:Cancel()
+                ActiveZombieTween = nil
+            end
+            Root.CFrame = CFrame.new(TargetPosition, ZombiePosition)
+            Root.Velocity = Vector3.zero
+            Root.RotVelocity = Vector3.zero
+            return
+        end
+        if ActiveZombieTween and ActiveZombieTween.PlaybackState == Enum.PlaybackState.Playing and LastZombieTweenPosition and (TargetPosition - LastZombieTweenPosition).Magnitude <= 8 and tick() - LastZombieTweenClock <= 0.2 then
+            return
+        end
+        if ActiveZombieTween then
+            ActiveZombieTween:Cancel()
+            ActiveZombieTween = nil
+        end
+        LastZombieTweenPosition = TargetPosition
+        LastZombieTweenClock = tick()
+        Root.Velocity = Vector3.zero
+        Root.RotVelocity = Vector3.zero
+        ActiveZombieTween = TweenService:Create(Root, TweenInfo.new(math.max(Distance / ZombieTweenSpeed, 0.02), Enum.EasingStyle.Linear), {CFrame = CFrame.new(TargetPosition, ZombiePosition)})
+        ActiveZombieTween:Play()
+    end
     local Shoot = function(Targets)
         if #Targets <= 0 then
             return
@@ -11438,14 +11495,29 @@ local function SolarixSurviveZombie()
         end
     end
     Tabs.General:Toggle({
-        Title = 'Auto Shoot',
+        Title = 'Auto Farm',
         Value = false,
         Callback = function(Value)
+            _G.SolarixZombieAutoFarm = Value
             _G.SolarixZombieAutoShoot = Value
             if Value then
                 FindGameClients()
                 task.defer(EquipGun)
+            else
+                StopZombieTween()
             end
+        end,
+    })
+    Tabs.General:Slider({
+        Title = 'Farm Distance',
+        Value = {
+            Min = 8,
+            Max = 120,
+            Default = FarmDistance,
+        },
+        Step = 1,
+        Callback = function(Value)
+            FarmDistance = math.clamp(math.floor(tonumber(Value) or 24), 8, 120)
         end,
     })
     Tabs.General:Toggle({
@@ -11465,11 +11537,15 @@ local function SolarixSurviveZombie()
     task.spawn(function()
         FindGameClients()
         while task.wait() do
-            if not SolarixStream(_G.SolarixZombieAutoShoot) then continue end
+            if not SolarixStream(_G.SolarixZombieAutoFarm) then continue end
             pcall(function()
                 local Targets = GetTargets()
                 if #Targets > 0 then
+                    EquipGun()
+                    TweenZombie(Targets[1])
                     Shoot(Targets)
+                else
+                    StopZombieTween()
                 end
             end)
         end
