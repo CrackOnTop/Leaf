@@ -219,7 +219,7 @@ local function SolarixBF()
     })
     Tabs.Info:Paragraph({
         Title = 'Support Game',
-        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Survive Zombie Arena',
+        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Solarix Survive Zombie',
         Color = 'Orange',
     })
     local vu = game:GetService('VirtualUser')
@@ -8825,7 +8825,7 @@ local function SolarixDoor()
     })
     Tabs.Info:Paragraph({
         Title = 'Support Game',
-        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Survive Zombie Arena',
+        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Solarix Survive Zombie',
         Color = 'Orange',
     })
     local Lighting = game:GetService('Lighting')
@@ -10480,7 +10480,7 @@ local function SolarixSailorPiece()
     })
     Tabs.Info:Paragraph({
         Title = 'Support Game',
-        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Survive Zombie Arena',
+        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Solarix Survive Zombie',
         Color = 'Orange',
     })
     UpdateIslandCrystals()
@@ -11063,6 +11063,7 @@ local function SolarixSailorPiece()
     end)
 end
 
+
 local function SolarixSurviveZombie()
     local Players = game:GetService('Players')
     local RunService = game:GetService('RunService')
@@ -11175,45 +11176,23 @@ local function SolarixSurviveZombie()
         EnableInitialToggleCallback(Tab)
     end
     Tabs.Info:Paragraph({
-        Title = 'Leaf Hub',
+        Title = 'Solarix Survive Zombie',
         Desc = "Press 'G' to toggle UI.",
         Color = 'Orange',
     })
     Tabs.Info:Paragraph({
         Title = 'Support Game',
-        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Survive Zombie Arena',
+        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Solarix Survive Zombie',
         Color = 'Orange',
-    })
-    Tabs.Info:Paragraph({
-        Title = 'Discord',
-        Desc = DiscordInvite,
-        Color = 'Orange',
-        Buttons = {
-            {
-                Title = 'Copy Link',
-                Callback = function()
-                    SetClip(DiscordInvite)
-                    pcall(function()
-                        Library:Notify({
-                            Title = 'Solarix Hub',
-                            Content = 'Discord link copied.',
-                            Icon = 'solar:copy-bold',
-                        })
-                    end)
-                end,
-            },
-        },
     })
     local ZombieClient = nil
     local GunClient = nil
     local GunRemotes = nil
     local CachedZombies = {}
     local LastScan = 0
-    local LastShoot = 0
-    local ScanDelay = 0
-    local ShootDelay = 0
-    local KillAuraRange = math.huge
-    local KillAuraTargets = math.huge
+    local ScanDelay = 0.05
+    local KillAuraRange = 1200
+    local KillAuraTargets = 20
     local function GetPosition(Value)
         if typeof(Value) == 'Vector3' then
             return Value
@@ -11279,12 +11258,65 @@ local function SolarixSurviveZombie()
             }
         end
     end
-    local function GetEquippedGun()
-        local Character = LocalPlayer.Character
-        if not Character then
-            return nil
+    local function IsGunTool(Tool)
+        if not Tool or not Tool:IsA('Tool') then
+            return false
         end
-        return Character:FindFirstChildOfClass('Tool')
+        local Name = string.lower(tostring(Tool.Name or ''))
+        local ToolTip = string.lower(tostring(Tool.ToolTip or ''))
+        if ToolTip:find('gun') or ToolTip:find('weapon') then
+            return true
+        end
+        if Name:find('gun') or Name:find('pistol') or Name:find('rifle') or Name:find('smg') or Name:find('shotgun') or Name:find('ak') or Name:find('uzi') then
+            return true
+        end
+        if Tool:FindFirstChild('GunScript') or Tool:FindFirstChild('GunClient') or Tool:FindFirstChild('Fire') then
+            return true
+        end
+        return false
+    end
+    local function FindGunTool()
+        local Character = LocalPlayer.Character
+        local Backpack = LocalPlayer:FindFirstChild('Backpack')
+        if Character then
+            for _, Tool in ipairs(Character:GetChildren()) do
+                if IsGunTool(Tool) then
+                    return Tool
+                end
+            end
+        end
+        if Backpack then
+            for _, Tool in ipairs(Backpack:GetChildren()) do
+                if IsGunTool(Tool) then
+                    return Tool
+                end
+            end
+        end
+        if Character then
+            local Tool = Character:FindFirstChildOfClass('Tool')
+            if Tool then
+                return Tool
+            end
+        end
+        if Backpack then
+            return Backpack:FindFirstChildOfClass('Tool')
+        end
+        return nil
+    end
+    local function EquipGun()
+        local Character = LocalPlayer.Character
+        local Humanoid = Character and Character:FindFirstChildOfClass('Humanoid')
+        local Tool = FindGunTool()
+        if Tool and Humanoid and Tool.Parent ~= Character then
+            pcall(function()
+                Humanoid:EquipTool(Tool)
+            end)
+            task.wait()
+        end
+        return Tool
+    end
+    local function GetEquippedGun()
+        return EquipGun()
     end
     local function ScanZombies()
         local Now = tick()
@@ -11412,39 +11444,19 @@ local function SolarixSurviveZombie()
             _G.SolarixZombieAutoShoot = Value
             if Value then
                 FindGameClients()
+                task.defer(EquipGun)
             end
         end,
     })
-    Tabs.General:Slider({
-        Title = 'Kill Aura Range',
-        Value = {Min = 50, Max = 5000, Default = KillAuraRange},
-        Callback = function(Value)
-            KillAuraRange = tonumber(Value) or KillAuraRange
-        end,
-    })
-    Tabs.General:Slider({
-        Title = 'Kill Aura Targets',
-        Value = {Min = 1, Max = 50, Default = KillAuraTargets},
-        Callback = function(Value)
-            KillAuraTargets = tonumber(Value) or KillAuraTargets
-        end,
-    })
-    Tabs.General:Slider({
-        Title = 'Shoot Delay x100',
-        Value = {Min = 1, Max = 20, Default = 1},
-        Callback = function(Value)
-            ShootDelay = math.max((tonumber(Value) or 1) / 100, 0.01)
-        end,
-    })
     Tabs.General:Toggle({
-        Title = 'Auto Nâng Súng',
+        Title = 'Auto Gun Upgrade',
         Value = false,
         Callback = function(Value)
             _G.SolarixZombieAutoGunUpgrade = Value
         end,
     })
     Tabs.General:Toggle({
-        Title = 'Auto Nâng Máu',
+        Title = 'Auto Health Upgrade',
         Value = false,
         Callback = function(Value)
             _G.SolarixZombieAutoHealthUpgrade = Value
@@ -11454,33 +11466,38 @@ local function SolarixSurviveZombie()
         FindGameClients()
         while task.wait() do
             if not SolarixStream(_G.SolarixZombieAutoShoot) then continue end
-            if tick() - LastShoot >= ShootDelay then
-                pcall(function()
-                    local Targets = GetTargets()
-                    if #Targets > 0 then
-                        Shoot(Targets)
-                        LastShoot = tick()
-                    end
-                end)
-            end
+            pcall(function()
+                local Targets = GetTargets()
+                if #Targets > 0 then
+                    Shoot(Targets)
+                end
+            end)
         end
     end)
     task.spawn(function()
         while task.wait() do
             if not SolarixStream(_G.SolarixZombieAutoGunUpgrade) then continue end
             pcall(function()
-                ReplicatedStorage.DataRemotes.GetUpgrades:InvokeServer()
+                local UpgradeRemotes = ReplicatedStorage:FindFirstChild('UpgradeRemotes')
+                local PurchaseWeaponUpgrade = UpgradeRemotes and UpgradeRemotes:FindFirstChild('PurchaseWeaponUpgrade')
+                if PurchaseWeaponUpgrade then
+                    PurchaseWeaponUpgrade:FireServer()
+                end
             end)
-            SolarixStreamDelay(0.35)
+            SolarixStreamDelay(0.45)
         end
     end)
     task.spawn(function()
         while task.wait() do
             if not SolarixStream(_G.SolarixZombieAutoHealthUpgrade) then continue end
             pcall(function()
-                ReplicatedStorage.UpgradeRemotes.PurchaseHealthUpgrade:FireServer()
+                local UpgradeRemotes = ReplicatedStorage:FindFirstChild('UpgradeRemotes')
+                local PurchaseHealthUpgrade = UpgradeRemotes and UpgradeRemotes:FindFirstChild('PurchaseHealthUpgrade')
+                if PurchaseHealthUpgrade then
+                    PurchaseHealthUpgrade:FireServer()
+                end
             end)
-            SolarixStreamDelay(0.35)
+            SolarixStreamDelay(0.45)
         end
     end)
     for _, Callback in ipairs(InitialToggleCallbacks) do
@@ -11492,7 +11509,7 @@ local function SolarixSurviveZombie()
     task.defer(function()
         Library:Notify({
             Title = 'Solarix Hub',
-            Content = 'Script loaded successfully.',
+            Content = 'Solarix Survive Zombie loaded.',
             Icon = 'solar:check-circle-bold',
         })
     end)
