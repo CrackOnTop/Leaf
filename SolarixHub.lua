@@ -10109,10 +10109,6 @@ local function SolarixSailorPiece()
         if not Root then
             return
         end
-        local Now = tick()
-        if Now - LastM1 < 0.06 then
-            return
-        end
         EquipWeapon()
         local HitCount = 0
         if PATH.Mobs then
@@ -10130,12 +10126,10 @@ local function SolarixSailorPiece()
             end
         end
         if HitCount > 0 then
-            UseSelectedSkills()
-        else
-            SafeFire(Remotes.M1)
+            task.spawn(UseSelectedSkills)
         end
-        LastM1 = Now
-    end
+        SafeFire(Remotes.M1)
+    end    
     local function TargetPosition(Target)
         local TargetCF = Pivot(Target)
         if not TargetCF then
