@@ -9405,8 +9405,8 @@ local function SolarixSailorPiece()
     local GuiService = game:GetService('GuiService')
     local LocalPlayer = Players.LocalPlayer
     local PlayerGui = LocalPlayer:WaitForChild('PlayerGui')
-    local TweenSpeed = 180
-    local TargetDistance = math.huge
+    local TweenSpeed = 150
+    local TargetDistance = 50
     local CurrentTween = nil
     local CurrentTweenTarget = nil
     local CurrentTweenConnection = nil
@@ -9456,6 +9456,36 @@ local function SolarixSailorPiece()
         _G[Flag] = false
     end
     _G.SolarixSailorAutoSkill = true
+    _G.SolarixSailorAutoReconnect = true
+    local SolarixSailorReconnectConnection = nil
+    local function SolarixSailorReconnect()
+        if SolarixSailorReconnectConnection then
+            SolarixSailorReconnectConnection:Disconnect()
+            SolarixSailorReconnectConnection = nil
+        end
+        SolarixSailorReconnectConnection = GuiService.ErrorMessageChanged:Connect(function()
+            if not _G.SolarixSailorAutoReconnect then
+                return
+            end
+            task.delay(2, function()
+                if not _G.SolarixSailorAutoReconnect then
+                    return
+                end
+                pcall(function()
+                    local PromptGui = game:GetService('CoreGui'):FindFirstChild('RobloxPromptGui')
+                    local Overlay = PromptGui and PromptGui:FindFirstChild('promptOverlay')
+                    local ErrorPrompt = Overlay and Overlay:FindFirstChild('ErrorPrompt')
+                    if ErrorPrompt and ErrorPrompt.Visible then
+                        task.wait(5)
+                        if _G.SolarixSailorAutoReconnect then
+                            TeleportService:Teleport(game.PlaceId, LocalPlayer)
+                        end
+                    end
+                end)
+            end)
+        end)
+    end
+    SolarixSailorReconnect()
     local function GetRemote(Parent, PathText)
         local Current = Parent
         for _, Name in ipairs(tostring(PathText):split('.')) do
@@ -10525,6 +10555,19 @@ local function SolarixSailorPiece()
         Value = true,
         Callback = function(Value)
             _G.SolarixSailorAutoSkill = Value
+        end,
+    })
+    Tabs.General:Toggle({
+        Title = 'Auto Reconnect',
+        Value = true,
+        Callback = function(Value)
+            _G.SolarixSailorAutoReconnect = Value
+            if Value then
+                SolarixSailorReconnect()
+            elseif SolarixSailorReconnectConnection then
+                SolarixSailorReconnectConnection:Disconnect()
+                SolarixSailorReconnectConnection = nil
+            end
         end,
     })
     local MobDropdown = Tabs.General:Dropdown({
