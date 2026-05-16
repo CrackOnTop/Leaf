@@ -11195,8 +11195,22 @@ local function SolarixSurviveZombie()
     local KillAuraRange = 1500
     local KillAuraTargets = 25
     local FarmDistance = 24
-    local ZombieTweenSpeed = 260
+    local ZombieTweenSpeed = 350
+    local ZombieTweenProxy = Workspace:FindFirstChild('SolarixZombieTweenProxy')
+    if ZombieTweenProxy then
+        ZombieTweenProxy:Destroy()
+    end
+    ZombieTweenProxy = Instance.new('Part')
+    ZombieTweenProxy.Name = 'SolarixZombieTweenProxy'
+    ZombieTweenProxy.Size = Vector3.new(1, 1, 1)
+    ZombieTweenProxy.Transparency = 1
+    ZombieTweenProxy.CanCollide = false
+    ZombieTweenProxy.CanTouch = false
+    ZombieTweenProxy.Anchored = true
+    ZombieTweenProxy.Parent = Workspace
     local ActiveZombieTween = nil
+    local ActiveZombieTweenConnection = nil
+    local ZombieTweenFollowConnection = nil
     local LastZombieTweenPosition = nil
     local LastZombieTweenClock = 0
     local function GetPosition(Value)
@@ -11390,13 +11404,69 @@ local function SolarixSurviveZombie()
         end
         return Targets
     end
+    local function ResetZombieTweenPhysics(Character)
+        local Root = Character and Character:FindFirstChild('HumanoidRootPart')
+        local Humanoid = Character and Character:FindFirstChildOfClass('Humanoid')
+        if Root then
+            Root.Velocity = Vector3.zero
+            Root.RotVelocity = Vector3.zero
+            local BodyClip = Root:FindFirstChild('BodyClip') or Root:FindFirstChild('SolarixZombieTweenVelocity') or Root:FindFirstChild('TweenBodyVelocity')
+            if BodyClip then
+                BodyClip:Destroy()
+            end
+        end
+        if Humanoid then
+            Humanoid.PlatformStand = false
+            Humanoid:SetStateEnabled(5, true)
+            Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        end
+    end
+    local function StartZombieTweenFollow()
+        if ZombieTweenFollowConnection then
+            return
+        end
+        ZombieTweenFollowConnection = RunService.Heartbeat:Connect(function()
+            local Character = LocalPlayer.Character
+            local Root = Character and Character:FindFirstChild('HumanoidRootPart')
+            local Humanoid = Character and Character:FindFirstChildOfClass('Humanoid')
+            if not ActiveZombieTween or ActiveZombieTween.PlaybackState ~= Enum.PlaybackState.Playing or not Root or not Humanoid or Humanoid.Health <= 0 then
+                if ZombieTweenFollowConnection then
+                    ZombieTweenFollowConnection:Disconnect()
+                    ZombieTweenFollowConnection = nil
+                end
+                return
+            end
+            Root.CFrame = ZombieTweenProxy.CFrame
+            Root.Velocity = Vector3.zero
+            Root.RotVelocity = Vector3.zero
+            Humanoid.PlatformStand = true
+            Humanoid:ChangeState(11)
+            if Humanoid.Sit then
+                Humanoid.Sit = false
+            end
+        end)
+    end
     local function StopZombieTween()
+        if ActiveZombieTweenConnection then
+            ActiveZombieTweenConnection:Disconnect()
+            ActiveZombieTweenConnection = nil
+        end
+        if ZombieTweenFollowConnection then
+            ZombieTweenFollowConnection:Disconnect()
+            ZombieTweenFollowConnection = nil
+        end
         if ActiveZombieTween then
             ActiveZombieTween:Cancel()
             ActiveZombieTween = nil
         end
         LastZombieTweenPosition = nil
         LastZombieTweenClock = 0
+        ResetZombieTweenPhysics(LocalPlayer.Character)
+        local Character = LocalPlayer.Character
+        local Root = Character and Character:FindFirstChild('HumanoidRootPart')
+        if Root then
+            ZombieTweenProxy.CFrame = Root.CFrame
+        end
     end
     local function TweenZombie(Target)
         if not Target or not Target.Position then
@@ -11405,7 +11475,7 @@ local function SolarixSurviveZombie()
         local Character = LocalPlayer.Character
         local Root = Character and Character:FindFirstChild('HumanoidRootPart')
         local Humanoid = Character and Character:FindFirstChildOfClass('Humanoid')
-        if not Root or not Humanoid or Humanoid.Health <= 0 then
+        if not Character or not Root or not Humanoid or Humanoid.Health <= 0 then
             return
         end
         local ZombiePosition = Target.Position
@@ -11416,30 +11486,128 @@ local function SolarixSurviveZombie()
             Direction = Direction.Unit
         end
         local TargetPosition = ZombiePosition + Direction * FarmDistance + Vector3.new(0, 2, 0)
+        local TargetCF = CFrame.new(TargetPosition, ZombiePosition)
         local Distance = (Root.Position - TargetPosition).Magnitude
-        if Distance <= math.max(FarmDistance * 0.35, 6) then
-            if ActiveZombieTween then
-                ActiveZombieTween:Cancel()
-                ActiveZombieTween = nil
-            end
-            Root.CFrame = CFrame.new(TargetPosition, ZombiePosition)
+        if ActiveZombieTween and ActiveZombieTween.PlaybackState == Enum.PlaybackState.Playing and LastZombieTweenPosition and (TargetPosition - LastZombieTweenPosition).Magnitude <= 10 and tick() - LastZombieTweenClock <= 0.25 then
+            return
+        end
+        if Distance <= math.max(FarmDistance * 0.3, 5) then
+            StopZombieTween()
+            Root.CFrame = TargetCF
+            ZombieTweenProxy.CFrame = TargetCF
             Root.Velocity = Vector3.zero
             Root.RotVelocity = Vector3.zero
             return
         end
-        if ActiveZombieTween and ActiveZombieTween.PlaybackState == Enum.PlaybackState.Playing and LastZombieTweenPosition and (TargetPosition - LastZombieTweenPosition).Magnitude <= 8 and tick() - LastZombieTweenClock <= 0.2 then
-            return
+        if ActiveZombieTweenConnection then
+            ActiveZombieTweenConnection:Disconnect()
+            ActiveZombieTweenConnection = nil
         end
         if ActiveZombieTween then
             ActiveZombieTween:Cancel()
             ActiveZombieTween = nil
         end
+        Humanoid:SetStateEnabled(5, false)
+        if Humanoid.Sit then
+            Humanoid.Sit = false
+        end
+        local BodyClip = Root:FindFirstChild('BodyClip')
+        if not BodyClip then
+            BodyClip = Instance.new('BodyVelocity')
+            BodyClip.Name = 'BodyClip'
+            BodyClip.MaxForce = Vector3.new(100000, 100000, 100000)
+            BodyClip.Velocity = Vector3.zero
+            BodyClip.Parent = Root
+        end
+        if (ZombieTweenProxy.Position - Root.Position).Magnitude > 10 then
+            ZombieTweenProxy.CFrame = Root.CFrame
+        end
         LastZombieTweenPosition = TargetPosition
         LastZombieTweenClock = tick()
-        Root.Velocity = Vector3.zero
-        Root.RotVelocity = Vector3.zero
-        ActiveZombieTween = TweenService:Create(Root, TweenInfo.new(math.max(Distance / ZombieTweenSpeed, 0.02), Enum.EasingStyle.Linear), {CFrame = CFrame.new(TargetPosition, ZombiePosition)})
+        ActiveZombieTween = TweenService:Create(ZombieTweenProxy, TweenInfo.new(math.max(Distance / ZombieTweenSpeed, 0.02), Enum.EasingStyle.Linear), {CFrame = TargetCF})
+        StartZombieTweenFollow()
         ActiveZombieTween:Play()
+        ActiveZombieTweenConnection = ActiveZombieTween.Completed:Connect(function(State)
+            if ActiveZombieTweenConnection then
+                ActiveZombieTweenConnection:Disconnect()
+                ActiveZombieTweenConnection = nil
+            end
+            if State == Enum.PlaybackState.Completed then
+                local NowCharacter = LocalPlayer.Character
+                local NowRoot = NowCharacter and NowCharacter:FindFirstChild('HumanoidRootPart')
+                StopZombieTween()
+                if NowRoot then
+                    NowRoot.CFrame = TargetCF
+                    ZombieTweenProxy.CFrame = TargetCF
+                end
+            end
+        end)
+    end
+    local function CreateZombieStopTweenButton()
+        local PlayerGui = LocalPlayer:WaitForChild('PlayerGui')
+        local OldCoreGui = gethui and gethui() or game:GetService('CoreGui')
+        if OldCoreGui:FindFirstChild('StopTweenGui') then
+            OldCoreGui.StopTweenGui:Destroy()
+        end
+        if PlayerGui:FindFirstChild('StopTweenGui') then
+            PlayerGui.StopTweenGui:Destroy()
+        end
+        local Gui = Instance.new('ScreenGui')
+        Gui.Name = 'StopTweenGui'
+        Gui.Parent = PlayerGui
+        Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        Gui.DisplayOrder = 1
+        Gui.ResetOnSpawn = false
+        local Frame = Instance.new('Frame')
+        Frame.Name = 'MainFrame'
+        Frame.Parent = Gui
+        Frame.AnchorPoint = Vector2.new(1, 0.5)
+        Frame.BackgroundColor3 = Color3.fromRGB(26, 12, 8)
+        Frame.BackgroundTransparency = 0.18
+        Frame.BorderSizePixel = 0
+        Frame.Size = UDim2.new(0, 108, 0, 36)
+        Frame.Position = UDim2.new(1, -10, 0.5, 0)
+        Frame.Active = true
+        Frame.ClipsDescendants = true
+        local Corner = Instance.new('UICorner')
+        Corner.Parent = Frame
+        Corner.CornerRadius = UDim.new(0, 14)
+        local Gradient = Instance.new('UIGradient')
+        Gradient.Parent = Frame
+        Gradient.Rotation = 45
+        Gradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(44, 15, 8)),
+            ColorSequenceKeypoint.new(0.42, Color3.fromRGB(255, 105, 26)),
+            ColorSequenceKeypoint.new(0.68, Color3.fromRGB(255, 221, 170)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(95, 27, 12)),
+        })
+        local Button = Instance.new('TextButton')
+        Button.Name = 'ActionButton'
+        Button.Parent = Frame
+        Button.BackgroundTransparency = 1
+        Button.Size = UDim2.new(1, -8, 1, 0)
+        Button.Position = UDim2.new(0, 4, 0, 0)
+        Button.Font = Enum.Font.FredokaOne
+        Button.Text = 'Stop Tween'
+        Button.TextColor3 = Color3.fromRGB(246, 255, 250)
+        Button.TextStrokeTransparency = 0.72
+        Button.TextStrokeColor3 = Color3.fromRGB(20, 8, 6)
+        Button.TextSize = 14
+        Button.TextScaled = true
+        Button.TextWrapped = false
+        Button.TextTruncate = Enum.TextTruncate.None
+        Button.MouseButton1Click:Connect(StopZombieTween)
+    end
+    CreateZombieStopTweenButton()
+    LocalPlayer.CharacterAdded:Connect(function(Character)
+        StopZombieTween()
+        local Humanoid = Character:WaitForChild('Humanoid', 10)
+        if Humanoid then
+            Humanoid.Died:Connect(StopZombieTween)
+        end
+    end)
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
+        LocalPlayer.Character:FindFirstChildOfClass('Humanoid').Died:Connect(StopZombieTween)
     end
     local Shoot = function(Targets)
         if #Targets <= 0 then
