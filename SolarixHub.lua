@@ -9406,7 +9406,7 @@ local function SolarixSailorPiece()
     local LocalPlayer = Players.LocalPlayer
     local PlayerGui = LocalPlayer:WaitForChild('PlayerGui')
     local TweenSpeed = 150
-    local TargetDistance = 50
+    local TargetDistance = 45
     local CurrentTween = nil
     local CurrentTweenTarget = nil
     local CurrentTweenConnection = nil
@@ -10099,9 +10099,10 @@ local function SolarixSailorPiece()
                 else
                     SafeFire(Remotes.UseSkill, ({Z = 1, X = 2, C = 3, V = 4, F = 5})[Key])
                 end
+                task.wait(0.25)
             end
         end
-        LastSkill = Now
+        LastSkill = tick()
     end
     local function Attack()
         local Root = GetRoot()
