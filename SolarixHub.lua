@@ -219,7 +219,7 @@ local function SolarixBF()
     })
     Tabs.Info:Paragraph({
         Title = 'Support Game',
-        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Solarix Survive Zombie',
+        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Survive Zombie Arena',
         Color = 'Orange',
     })
     local vu = game:GetService('VirtualUser')
@@ -8825,7 +8825,7 @@ local function SolarixDoor()
     })
     Tabs.Info:Paragraph({
         Title = 'Support Game',
-        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Solarix Survive Zombie',
+        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Survive Zombie Arena',
         Color = 'Orange',
     })
     local Lighting = game:GetService('Lighting')
@@ -10480,7 +10480,7 @@ local function SolarixSailorPiece()
     })
     Tabs.Info:Paragraph({
         Title = 'Support Game',
-        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Solarix Survive Zombie',
+        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Survive Zombie Arena',
         Color = 'Orange',
     })
     UpdateIslandCrystals()
@@ -11176,13 +11176,13 @@ local function SolarixSurviveZombie()
         EnableInitialToggleCallback(Tab)
     end
     Tabs.Info:Paragraph({
-        Title = 'Solarix Survive Zombie',
+        Title = 'Leaf Hub',
         Desc = "Press 'G' to toggle UI.",
         Color = 'Orange',
     })
     Tabs.Info:Paragraph({
         Title = 'Support Game',
-        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Solarix Survive Zombie',
+        Desc = '[+] Blox Fruits\n[+] Doors\n[+] Sailor Piece\n[+] Survive Zombie Arena',
         Color = 'Orange',
     })
     local ZombieClient = nil
@@ -11509,7 +11509,7 @@ local function SolarixSurviveZombie()
     task.defer(function()
         Library:Notify({
             Title = 'Solarix Hub',
-            Content = 'Solarix Survive Zombie loaded.',
+            Content = 'Script loaded successfully.',
             Icon = 'solar:check-circle-bold',
         })
     end)
