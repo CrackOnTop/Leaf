@@ -10070,7 +10070,7 @@ local function SolarixSailorPiece()
         return Character and Character:FindFirstChildOfClass('Tool')
     end
     local function UseSelectedSkills()
-        if not _G.SolarixSailorAutoSkill then
+        if not _G.SolarixSailorAutoSkill or not SailorFarmActive() then
             return
         end
         local Now = tick()
@@ -10088,7 +10088,7 @@ local function SolarixSailorPiece()
         end
         local ToolType = GetToolTypeFromModule(Tool.Name)
         for _, Key in ipairs({'Z', 'X', 'C', 'V', 'F'}) do
-            if not _G.SolarixSailorAutoSkill then break end
+            if not _G.SolarixSailorAutoSkill or not SailorFarmActive() then break end
             if SelectedSkills[Key] then
                 if ToolType == 'Power' then
                     SafeFire(Remotes.UseFruit, 'UseAbility', {
