@@ -9426,7 +9426,7 @@ local function SolarixSailorPiece()
     local SelectedSkills = {Z = true, X = true, C = true, V = true, F = true}
     local SelectedCodes = {'Release', 'Update', 'Sorry', 'Shutdown', 'Thanks'}
     local LastM1 = 0
-    local LastSkill = 0
+    local LastSkill = tick()
     local LastQuest = 0
     local LastInventory = 0
     local LastMerchant = 0
