@@ -10108,8 +10108,8 @@ local function SolarixSailorPiece()
             return
         end
         EquipWeapon()
-        local HitCount = 0
         if PATH.Mobs then
+            local HitCount = 0
             for _, Npc in ipairs(PATH.Mobs:GetChildren()) do
                 if Npc:IsA('Model') and Alive(Npc) then
                     local CF = Pivot(Npc)
@@ -10123,11 +10123,8 @@ local function SolarixSailorPiece()
                 end
             end
         end
-        if HitCount > 0 then
-            task.spawn(UseSelectedSkills)
-        end
         SafeFire(Remotes.M1)
-    end    
+    end
     local function TargetPosition(Target)
         local TargetCF = Pivot(Target)
         if not TargetCF then
