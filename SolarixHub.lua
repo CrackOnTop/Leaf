@@ -878,7 +878,6 @@ local function SolarixBF()
         Callback = function(v) _G.Select_Gun = v end
     })
     function CallSkills()
-        if not _G.SolarixSailorAutoSkill then return end
         local Player = game:GetService("Players").LocalPlayer
         local Character = Player.Character
         local Humanoid = Character and Character:FindFirstChild("Humanoid")
@@ -920,7 +919,6 @@ local function SolarixBF()
                         task.wait(0.2)
                     end
                     for _, keyStr in ipairs(activeKeys) do
-                        if not _G.SolarixSailorAutoSkill then break end
                         local key = Enum.KeyCode[keyStr]
                         if key then
                             game:GetService("VirtualInputManager"):SendKeyEvent(true, key, false, game)
@@ -10115,7 +10113,7 @@ local function SolarixSailorPiece()
             for _, Npc in ipairs(PATH.Mobs:GetChildren()) do
                 if Npc:IsA('Model') and Alive(Npc) then
                     local CF = Pivot(Npc)
-                    if CF and (Root.Position - CF.Position).Magnitude <= 115 then
+                    if CF and (Root.Position - CF.Position).Magnitude <= 120 then
                         SafeFire(Remotes.M1, CF.Position)
                         HitCount += 1
                         if HitCount >= 15 then
@@ -10125,11 +10123,11 @@ local function SolarixSailorPiece()
                 end
             end
         end
-        if HitCount > 0 then
+        if HitCount > 0 and _G.SolarixSailorAutoSkill then
             task.spawn(UseSelectedSkills)
         end
         SafeFire(Remotes.M1)
-    end    
+    end
     local function TargetPosition(Target)
         local TargetCF = Pivot(Target)
         if not TargetCF then
