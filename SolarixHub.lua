@@ -10234,66 +10234,6 @@ local function SolarixSailorPiece()
         SafeFire(Remotes.SettingsToggle, 'EnableQuestRepeat', true)
         SafeFire(Remotes.SettingsToggle, 'AutoQuestRepeat', true)
     end
-    local function GetLevelQuestNPC()
-        local Level = GetPlayerLevel()
-        local TargetNPC = nil
-        local TargetLevel = -1
-        local LowestNPC = nil
-        local LowestLevel = math.huge
-        local Repeatable = Modules.Quests and Modules.Quests.RepeatableQuests or {}
-        for NpcId, QuestData in pairs(Repeatable) do
-            local Required = QuestLevel(QuestData or {})
-            local HasMob = QuestData and QuestData.requirements and QuestData.requirements[1] and QuestData.requirements[1].npcType
-            if HasMob and Required > 0 then
-                if Required < LowestLevel then
-                    LowestNPC = NpcId
-                    LowestLevel = Required
-                end
-                if Level >= Required and Required > TargetLevel then
-                    TargetNPC = NpcId
-                    TargetLevel = Required
-                end
-            end
-        end
-        return TargetNPC or LowestNPC or 'QuestNPC1'
-    end
-    local function UpdateQuest()
-        if not _G.SolarixSailorLevelFarm then
-            return nil
-        end
-        EnsureQuestSettings()
-        local TargetNPC = GetLevelQuestNPC()
-        local QuestUI = PlayerGui:FindFirstChild('QuestUI') and PlayerGui.QuestUI:FindFirstChild('Quest')
-        if not QuestUI then
-            SafeFire(Remotes.QuestAccept, TargetNPC)
-            LastTargetName = TargetNPC
-            return TargetNPC
-        end
-        if LastTargetName ~= TargetNPC or not QuestUI.Visible then
-            SafeFire(Remotes.QuestAbandon, 'repeatable')
-            local AbandonTick = 0
-            while _G.SolarixSailorLevelFarm and QuestUI.Visible and AbandonTick < 15 do
-                task.wait(0.2)
-                AbandonTick += 1
-            end
-            if not _G.SolarixSailorLevelFarm then
-                return nil
-            end
-            SafeFire(Remotes.QuestAccept, TargetNPC)
-            local AcceptTick = 0
-            while _G.SolarixSailorLevelFarm and not QuestUI.Visible and AcceptTick < 20 do
-                task.wait(0.2)
-                AcceptTick += 1
-                if AcceptTick % 5 == 0 then
-                    SafeFire(Remotes.QuestAccept, TargetNPC)
-                end
-            end
-            if QuestUI.Visible and _G.SolarixSailorLevelFarm then
-                LastTargetName = TargetNPC
-            end
-        end
-        return _G.SolarixSailorLevelFarm and TargetNPC or nil
-    end
     local function FindNearestByName(Name, BossOnly)
         local Root = GetRoot()
         local Best
@@ -10326,35 +10266,84 @@ local function SolarixSailorPiece()
         end
         return QuestData.requirements[1].npcType and CleanName(QuestData.requirements[1].npcType):lower() or nil
     end
+    local function GetLevelQuestNPC()
+        local Level = GetPlayerLevel()
+        local TargetNPC = nil
+        local TargetLevel = -1
+        local LowestNPC = nil
+        local LowestLevel = math.huge
+        local Repeatable = Modules.Quests and Modules.Quests.RepeatableQuests or {}
+        for NpcId, QuestData in pairs(Repeatable) do
+            local Required = QuestLevel(QuestData or {})
+            local HasMob = QuestData and QuestData.requirements and QuestData.requirements[1] and QuestData.requirements[1].npcType
+            if HasMob and Required > 0 then
+                if Required < LowestLevel then
+                    LowestNPC = NpcId
+                    LowestLevel = Required
+                end
+                if Level >= Required and Required > TargetLevel then
+                    TargetNPC = NpcId
+                    TargetLevel = Required
+                end
+            end
+        end
+        return TargetNPC or LowestNPC or 'QuestNPC1'
+    end
+    local function UpdateQuest()
+        if not _G.SolarixSailorLevelFarm then
+            return nil
+        end
+        EnsureQuestSettings()
+        local TargetNPC = GetLevelQuestNPC()
+        local QuestLine = LocalPlayer:FindFirstChild("PlayerGui") and LocalPlayer.PlayerGui:FindFirstChild("QuestUI") and LocalPlayer.PlayerGui.QuestUI:FindFirstChild("Quest")
+        local HasActiveQuest = QuestLine and QuestLine.Visible
+        if not HasActiveQuest then
+            SafeFire(Remotes.QuestAccept, TargetNPC)
+            LastTargetName = TargetNPC
+            task.wait(0.3)
+            return TargetNPC
+        end
+        if LastTargetName ~= TargetNPC then
+            SafeFire(Remotes.QuestAbandon, 'repeatable')
+            task.wait(0.3)
+            SafeFire(Remotes.QuestAccept, TargetNPC)
+            LastTargetName = TargetNPC
+            task.wait(0.3)
+        end
+        return TargetNPC
+    end
     local function FindLevelMob()
         if not _G.SolarixSailorLevelFarm then
             return nil
         end
         local QuestNPC = UpdateQuest()
-        if not QuestNPC or not _G.SolarixSailorLevelFarm then
+        if not QuestNPC then
             return nil
         end
         local TargetMobType = GetQuestMobName(QuestNPC)
-        if not TargetMobType or not PlayerGui:FindFirstChild('QuestUI') or not PlayerGui.QuestUI:FindFirstChild('Quest') or not PlayerGui.QuestUI.Quest.Visible or not PATH.Mobs then
+        if not TargetMobType or not PATH.Mobs then
             return nil
         end
         local Root = GetRoot()
         local Target = nil
         local Distance = math.huge
         for _, Npc in ipairs(PATH.Mobs:GetChildren()) do
-            if Npc:IsA('Model') and IsValidTarget(Npc) and CleanName(Npc.Name):lower() == TargetMobType then
-                local CF = Pivot(Npc)
-                if CF then
-                    local NewDistance = Root and (Root.Position - CF.Position).Magnitude or 0
-                    if NewDistance < Distance then
-                        Target = Npc
-                        Distance = NewDistance
+            if Npc:IsA('Model') and IsValidTarget(Npc) then
+                local NpcCleanName = CleanName(Npc.Name):lower()
+                if NpcCleanName == TargetMobType or NpcCleanName:find(TargetMobType, 1, true) or TargetMobType:find(NpcCleanName, 1, true) then
+                    local CF = Pivot(Npc)
+                    if CF then
+                        local NewDistance = Root and (Root.Position - CF.Position).Magnitude or 0
+                        if NewDistance < Distance then
+                            Target = Npc
+                            Distance = NewDistance
+                        end
                     end
                 end
             end
         end
         return Target
-    end
+    end    
     local function AcceptQuestForTarget(Target)
         if _G.SolarixSailorLevelFarm then
             UpdateQuest()
