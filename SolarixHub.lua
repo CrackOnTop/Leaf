@@ -9455,7 +9455,6 @@ local function SolarixSailorPiece()
     for _, Flag in ipairs({'SolarixSailorLevelFarm', 'SolarixSailorMobFarm', 'SolarixSailorAllMobFarm', 'SolarixSailorBossesFarm', 'SolarixSailorAllBossesFarm', 'SolarixSailorSummonBossFarm', 'SolarixSailorAutoDungeon', 'SolarixSailorAutoInfiniteTower', 'SolarixSailorDungeonAutofarm', 'SolarixSailorAutoStats', 'SolarixSailorAutoAscend', 'SolarixSailorAutoTrait', 'SolarixSailorAutoRace', 'SolarixSailorAutoClan', 'SolarixSailorAutoCraftItem', 'SolarixSailorArtifactMilestone', 'SolarixSailorArtifactUpgrade', 'SolarixSailorArtifactEquip', 'SolarixSailorAutoMerchant', 'SolarixSailorAutoDungeonMerchant', 'SolarixSailorAutoValentineMerchant', 'SolarixSailorAutoTowerMerchant', 'SolarixSailorAutoSummon', 'SolarixSailorAutoSkill'}) do
         _G[Flag] = false
     end
-    _G.SolarixSailorAutoSkill = true
     _G.SolarixSailorAutoReconnect = true
     local SolarixSailorReconnectConnection = nil
     local function SolarixSailorReconnect()
@@ -9467,21 +9466,15 @@ local function SolarixSailorPiece()
             if not _G.SolarixSailorAutoReconnect then
                 return
             end
-            task.delay(2, function()
-                if not _G.SolarixSailorAutoReconnect then
-                    return
-                end
-                pcall(function()
-                    local PromptGui = game:GetService('CoreGui'):FindFirstChild('RobloxPromptGui')
-                    local Overlay = PromptGui and PromptGui:FindFirstChild('promptOverlay')
-                    local ErrorPrompt = Overlay and Overlay:FindFirstChild('ErrorPrompt')
-                    if ErrorPrompt and ErrorPrompt.Visible then
-                        task.wait(5)
-                        if _G.SolarixSailorAutoReconnect then
-                            TeleportService:Teleport(game.PlaceId, LocalPlayer)
-                        end
+            pcall(function()
+                local PromptGui = game:GetService('CoreGui'):FindFirstChild('RobloxPromptGui')
+                local Overlay = PromptGui and PromptGui:FindFirstChild('promptOverlay')
+                local ErrorPrompt = Overlay and Overlay:FindFirstChild('ErrorPrompt')
+                if ErrorPrompt and ErrorPrompt.Visible then
+                    if _G.SolarixSailorAutoReconnect then
+                        TeleportService:Teleport(game.PlaceId, LocalPlayer)
                     end
-                end)
+                end
             end)
         end)
     end
@@ -10102,14 +10095,14 @@ local function SolarixSailorPiece()
             end
         end
     end
-    local function Attack()
+Local function Attack()
         local Root = GetRoot()
         if not Root then
             return
         end
         EquipWeapon()
+        local HitCount = 0
         if PATH.Mobs then
-            local HitCount = 0
             for _, Npc in ipairs(PATH.Mobs:GetChildren()) do
                 if Npc:IsA('Model') and Alive(Npc) then
                     local CF = Pivot(Npc)
@@ -10123,8 +10116,11 @@ local function SolarixSailorPiece()
                 end
             end
         end
+        if HitCount > 0 then
+            task.spawn(UseSelectedSkills)
+        end
         SafeFire(Remotes.M1)
-    end
+    end    
     local function TargetPosition(Target)
         local TargetCF = Pivot(Target)
         if not TargetCF then
