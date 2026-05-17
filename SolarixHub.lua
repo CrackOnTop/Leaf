@@ -878,6 +878,7 @@ local function SolarixBF()
         Callback = function(v) _G.Select_Gun = v end
     })
     function CallSkills()
+        if not _G.SolarixSailorAutoSkill then return end
         local Player = game:GetService("Players").LocalPlayer
         local Character = Player.Character
         local Humanoid = Character and Character:FindFirstChild("Humanoid")
@@ -919,6 +920,7 @@ local function SolarixBF()
                         task.wait(0.2)
                     end
                     for _, keyStr in ipairs(activeKeys) do
+                        if not _G.SolarixSailorAutoSkill then break end
                         local key = Enum.KeyCode[keyStr]
                         if key then
                             game:GetService("VirtualInputManager"):SendKeyEvent(true, key, false, game)
@@ -9426,7 +9428,7 @@ local function SolarixSailorPiece()
     local SelectedSkills = {Z = true, X = true, C = true, V = true, F = true}
     local SelectedCodes = {'Release', 'Update', 'Sorry', 'Shutdown', 'Thanks'}
     local LastM1 = 0
-    local LastSkill = tick()
+    local LastSkill = 0
     local LastQuest = 0
     local LastInventory = 0
     local LastMerchant = 0
