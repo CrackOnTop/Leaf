@@ -9414,7 +9414,7 @@ local function SolarixSailorPiece()
     local TweenProxy = nil
     local NoclipParts = {}
     local SelectedWeaponType = 'Melee'
-    local FarmDistance = 12
+    local FarmDistance = 20
     local SelectedMob = ''
     local SelectedBoss = ''
     local SelectedSummon = ''
@@ -10070,7 +10070,7 @@ local function SolarixSailorPiece()
         return Character and Character:FindFirstChildOfClass('Tool')
     end
     local function UseSelectedSkills()
-        if not _G.SolarixSailorAutoSkill or not SailorFarmActive() then
+        if not _G.SolarixSailorAutoSkill then
             return
         end
         local Now = tick()
@@ -10088,7 +10088,7 @@ local function SolarixSailorPiece()
         end
         local ToolType = GetToolTypeFromModule(Tool.Name)
         for _, Key in ipairs({'Z', 'X', 'C', 'V', 'F'}) do
-            if not _G.SolarixSailorAutoSkill or not SailorFarmActive() then break end
+            if not _G.SolarixSailorAutoSkill then break end
             if SelectedSkills[Key] then
                 if ToolType == 'Power' then
                     SafeFire(Remotes.UseFruit, 'UseAbility', {
@@ -10113,7 +10113,7 @@ local function SolarixSailorPiece()
             for _, Npc in ipairs(PATH.Mobs:GetChildren()) do
                 if Npc:IsA('Model') and Alive(Npc) then
                     local CF = Pivot(Npc)
-                    if CF and (Root.Position - CF.Position).Magnitude <= 120 then
+                    if CF and (Root.Position - CF.Position).Magnitude <= 115 then
                         SafeFire(Remotes.M1, CF.Position)
                         HitCount += 1
                         if HitCount >= 15 then
@@ -10123,11 +10123,11 @@ local function SolarixSailorPiece()
                 end
             end
         end
-        if HitCount > 0 and _G.SolarixSailorAutoSkill then
+        if HitCount > 0 then
             task.spawn(UseSelectedSkills)
         end
         SafeFire(Remotes.M1)
-    end
+    end    
     local function TargetPosition(Target)
         local TargetCF = Pivot(Target)
         if not TargetCF then
@@ -10534,7 +10534,7 @@ local function SolarixSailorPiece()
     })
     Tabs.General:Toggle({
         Title = 'Auto Skill',
-        Value = true,
+        Value = false,
         Callback = function(Value)
             _G.SolarixSailorAutoSkill = Value
         end,
