@@ -9414,7 +9414,7 @@ local function SolarixSailorPiece()
     local TweenProxy = nil
     local NoclipParts = {}
     local SelectedWeaponType = 'Melee'
-    local FarmDistance = 12
+    local FarmDistance = 20
     local SelectedMob = ''
     local SelectedBoss = ''
     local SelectedSummon = ''
@@ -10100,14 +10100,16 @@ local function SolarixSailorPiece()
         if not Root then
             return
         end
+        
         EquipWeapon()
         local HitCount = 0
+        
         if PATH.Mobs then
             for _, Npc in ipairs(PATH.Mobs:GetChildren()) do
                 if Npc:IsA('Model') and Alive(Npc) then
                     local CF = Pivot(Npc)
                     if CF and (Root.Position - CF.Position).Magnitude <= 115 then
-                        SafeFire(Remotes.M1, CF.Position)
+                        task.spawn(SafeFire, Remotes.M1, CF.Position)
                         HitCount += 1
                         if HitCount >= 15 then
                             break
@@ -10116,11 +10118,13 @@ local function SolarixSailorPiece()
                 end
             end
         end
+        
         if HitCount > 0 then
             task.spawn(UseSelectedSkills)
         end
-        SafeFire(Remotes.M1)
-    end    
+        
+        task.spawn(SafeFire, Remotes.M1)
+    end
     local function TargetPosition(Target)
         local TargetCF = Pivot(Target)
         if not TargetCF then
