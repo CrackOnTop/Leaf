@@ -10097,25 +10097,25 @@ local function SolarixSailorPiece()
     end
     local function Attack()
         local Root = GetRoot()
-        if not Root or not PATH.Mobs then return end
+        if not Root then return end
         EquipWeapon()
         
         local HitCount = 0
-        for _, Npc in ipairs(PATH.Mobs:GetChildren()) do
-            if Npc:IsA('Model') and Alive(Npc) then
-                local CF = Pivot(Npc)
-                if CF and (Root.Position - CF.Position).Magnitude <= 115 then
-                    task.spawn(SafeFire, Remotes.M1, CF.Position)
-                    HitCount += 1
-                    if HitCount >= 15 then break end
+        if PATH.Mobs then
+            for _, Npc in ipairs(PATH.Mobs:GetChildren()) do
+                if Npc:IsA('Model') and Alive(Npc) then
+                    local CF = Pivot(Npc)
+                    if CF and (Root.Position - CF.Position).Magnitude <= 115 then
+                        task.spawn(SafeFire, Remotes.M1, CF.Position)
+                        HitCount += 1
+                        if HitCount >= 15 then break end
+                    end
                 end
             end
         end
         
-        if HitCount > 0 then
-            UseSelectedSkills()
-            SafeFire(Remotes.M1)
-        end
+        if HitCount > 0 then task.spawn(UseSelectedSkills) end
+        task.spawn(SafeFire, Remotes.M1)
     end
     local function TargetPosition(Target)
         local TargetCF = Pivot(Target)
