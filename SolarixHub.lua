@@ -9457,7 +9457,7 @@ local function SolarixSailorPiece()
     end
     _G.SolarixSailorAutoReconnect = true
     local SolarixSailorReconnectConnection = nil
-    local function SolarixSailorReconnect()
+        local function SolarixSailorReconnect()
         if SolarixSailorReconnectConnection then
             SolarixSailorReconnectConnection:Disconnect()
             SolarixSailorReconnectConnection = nil
@@ -10066,6 +10066,7 @@ local function SolarixSailorPiece()
         if not _G.SolarixSailorAutoSkill then
             return
         end
+        
         local Now = tick()
         if Now - LastSkill < 0.22 then
             return
@@ -10082,6 +10083,7 @@ local function SolarixSailorPiece()
         local ToolType = GetToolTypeFromModule(Tool.Name)
         for _, Key in ipairs({'Z', 'X', 'C', 'V', 'F'}) do
             if not _G.SolarixSailorAutoSkill then break end
+            
             if SelectedSkills[Key] then
                 if ToolType == 'Power' then
                     SafeFire(Remotes.UseFruit, 'UseAbility', {
@@ -10095,13 +10097,16 @@ local function SolarixSailorPiece()
             end
         end
     end
-Local function Attack()
+
+    local function Attack()
         local Root = GetRoot()
         if not Root then
             return
         end
+    
         EquipWeapon()
         local HitCount = 0
+    
         if PATH.Mobs then
             for _, Npc in ipairs(PATH.Mobs:GetChildren()) do
                 if Npc:IsA('Model') and Alive(Npc) then
@@ -10116,9 +10121,11 @@ Local function Attack()
                 end
             end
         end
-        if HitCount > 0 then
+    
+        if HitCount > 0 and _G.SolarixSailorAutoSkill then
             task.spawn(UseSelectedSkills)
         end
+    
         SafeFire(Remotes.M1)
     end    
     local function TargetPosition(Target)
