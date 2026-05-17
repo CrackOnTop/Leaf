@@ -9452,7 +9452,7 @@ local function SolarixSailorPiece()
         Island = {'Starter', 'Jungle', 'Desert', 'Snow', 'Sailor', 'Shibuya', 'HuecoMundo', 'Boss', 'Dungeon', 'Shinjuku', 'Valentine', 'Slime', 'Academy', 'Judgement', 'SoulSociety', 'Tower'},
         ManualWeaponClass = {Combat = 'Melee', Invisible = 'Power', Bomb = 'Power', Quake = 'Power'},
     }
-    for _, Flag in ipairs({'SolarixSailorLevelFarm', 'SolarixSailorMobFarm', 'SolarixSailorAllMobFarm', 'SolarixSailorBossesFarm', 'SolarixSailorAllBossesFarm', 'SolarixSailorSummonBossFarm', 'SolarixSailorAutoDungeon', 'SolarixSailorAutoInfiniteTower', 'SolarixSailorDungeonAutofarm', 'SolarixSailorAutoStats', 'SolarixSailorAutoAscend', 'SolarixSailorAutoTrait', 'SolarixSailorAutoRace', 'SolarixSailorAutoClan', 'SolarixSailorAutoCraftItem', 'SolarixSailorArtifactMilestone', 'SolarixSailorArtifactUpgrade', 'SolarixSailorArtifactEquip', 'SolarixSailorAutoMerchant', 'SolarixSailorAutoDungeonMerchant', 'SolarixSailorAutoValentineMerchant', 'SolarixSailorAutoTowerMerchant', 'SolarixSailorAutoSummon', 'SolarixSailorArmHaki', 'SolarixSailorObservationHaki', 'SolarixSailorConquerorHaki', 'SolarixSailorAutoSkill'}) do
+    for _, Flag in ipairs({'SolarixSailorLevelFarm', 'SolarixSailorMobFarm', 'SolarixSailorAllMobFarm', 'SolarixSailorBossesFarm', 'SolarixSailorAllBossesFarm', 'SolarixSailorSummonBossFarm', 'SolarixSailorAutoDungeon', 'SolarixSailorAutoInfiniteTower', 'SolarixSailorDungeonAutofarm', 'SolarixSailorAutoStats', 'SolarixSailorAutoAscend', 'SolarixSailorAutoTrait', 'SolarixSailorAutoRace', 'SolarixSailorAutoClan', 'SolarixSailorAutoCraftItem', 'SolarixSailorArtifactMilestone', 'SolarixSailorArtifactUpgrade', 'SolarixSailorArtifactEquip', 'SolarixSailorAutoMerchant', 'SolarixSailorAutoDungeonMerchant', 'SolarixSailorAutoValentineMerchant', 'SolarixSailorAutoTowerMerchant', 'SolarixSailorAutoSummon', 'SolarixSailorAutoSkill'}) do
         _G[Flag] = false
     end
     _G.SolarixSailorAutoSkill = true
@@ -9509,9 +9509,6 @@ local function SolarixSailorPiece()
         SlimeCraft = GetRemote(ReplicatedStorage, 'Remotes.RequestSlimeCraft'),
         GrailCraft = GetRemote(ReplicatedStorage, 'Remotes.RequestGrailCraft'),
         AddStat = GetRemote(ReplicatedStorage, 'RemoteEvents.AllocateStat'),
-        ArmHaki = GetRemote(ReplicatedStorage, 'RemoteEvents.HakiRemote'),
-        ObserHaki = GetRemote(ReplicatedStorage, 'RemoteEvents.ObservationHakiRemote'),
-        ConquerorHaki = GetRemote(ReplicatedStorage, 'Remotes.ConquerorHakiRemote'),
         TPPortal = GetRemote(ReplicatedStorage, 'Remotes.TeleportToPortal'),
         OpenDungeon = GetRemote(ReplicatedStorage, 'Remotes.RequestDungeonPortal'),
         DungeonWaveVote = GetRemote(ReplicatedStorage, 'Remotes.DungeonWaveVote'),
@@ -10080,6 +10077,7 @@ local function SolarixSailorPiece()
         if Now - LastSkill < 0.22 then
             return
         end
+        LastSkill = Now
         local Character = GetCharacter()
         local Tool = Character and Character:FindFirstChildOfClass('Tool')
         if not Tool then
@@ -10090,6 +10088,7 @@ local function SolarixSailorPiece()
         end
         local ToolType = GetToolTypeFromModule(Tool.Name)
         for _, Key in ipairs({'Z', 'X', 'C', 'V', 'F'}) do
+            if not _G.SolarixSailorAutoSkill then break end
             if SelectedSkills[Key] then
                 if ToolType == 'Power' then
                     SafeFire(Remotes.UseFruit, 'UseAbility', {
@@ -10102,7 +10101,6 @@ local function SolarixSailorPiece()
                 task.wait(0.25)
             end
         end
-        LastSkill = tick()
     end
     local function Attack()
         local Root = GetRoot()
@@ -10614,27 +10612,6 @@ local function SolarixSailorPiece()
             end
         end,
     })
-    Tabs.General:Toggle({
-        Title = 'Arm Haki',
-        Value = true,
-        Callback = function(Value)
-            _G.SolarixSailorArmHaki = Value
-        end,
-    })
-    Tabs.General:Toggle({
-        Title = 'Observation Haki',
-        Value = false,
-        Callback = function(Value)
-            _G.SolarixSailorObservationHaki = Value
-        end,
-    })
-    Tabs.General:Toggle({
-        Title = 'Conqueror Haki',
-        Value = false,
-        Callback = function(Value)
-            _G.SolarixSailorConquerorHaki = Value
-        end,
-    })
     local BossDropdown = Tabs.Boss:Dropdown({
         Title = 'Select Boss',
         Values = Tables.Boss,
@@ -10881,24 +10858,6 @@ local function SolarixSailorPiece()
                 TeleportService:Teleport(game.PlaceId, LocalPlayer)
             end)
         end)
-    end)
-    task.spawn(function()
-        while task.wait() do
-            if not _G.SolarixSailorArmHaki and not _G.SolarixSailorObservationHaki and not _G.SolarixSailorConquerorHaki then
-                SolarixStreamDelay(0.8)
-                continue
-            end
-            if _G.SolarixSailorArmHaki then
-                SafeFire(Remotes.ArmHaki)
-            end
-            if _G.SolarixSailorObservationHaki then
-                SafeFire(Remotes.ObserHaki)
-            end
-            if _G.SolarixSailorConquerorHaki then
-                SafeFire(Remotes.ConquerorHaki, 'Activate')
-            end
-            SolarixStreamDelay(0.75)
-        end
     end)
     task.spawn(function()
         while task.wait() do
