@@ -9414,7 +9414,7 @@ local function SolarixSailorPiece()
     local TweenProxy = nil
     local NoclipParts = {}
     local SelectedWeaponType = 'Melee'
-    local FarmDistance = 20
+    local FarmDistance = 12
     local SelectedMob = ''
     local SelectedBoss = ''
     local SelectedSummon = ''
@@ -9455,9 +9455,10 @@ local function SolarixSailorPiece()
     for _, Flag in ipairs({'SolarixSailorLevelFarm', 'SolarixSailorMobFarm', 'SolarixSailorAllMobFarm', 'SolarixSailorBossesFarm', 'SolarixSailorAllBossesFarm', 'SolarixSailorSummonBossFarm', 'SolarixSailorAutoDungeon', 'SolarixSailorAutoInfiniteTower', 'SolarixSailorDungeonAutofarm', 'SolarixSailorAutoStats', 'SolarixSailorAutoAscend', 'SolarixSailorAutoTrait', 'SolarixSailorAutoRace', 'SolarixSailorAutoClan', 'SolarixSailorAutoCraftItem', 'SolarixSailorArtifactMilestone', 'SolarixSailorArtifactUpgrade', 'SolarixSailorArtifactEquip', 'SolarixSailorAutoMerchant', 'SolarixSailorAutoDungeonMerchant', 'SolarixSailorAutoValentineMerchant', 'SolarixSailorAutoTowerMerchant', 'SolarixSailorAutoSummon', 'SolarixSailorAutoSkill'}) do
         _G[Flag] = false
     end
+    _G.SolarixSailorAutoSkill = true
     _G.SolarixSailorAutoReconnect = true
     local SolarixSailorReconnectConnection = nil
-        local function SolarixSailorReconnect()
+    local function SolarixSailorReconnect()
         if SolarixSailorReconnectConnection then
             SolarixSailorReconnectConnection:Disconnect()
             SolarixSailorReconnectConnection = nil
@@ -10066,12 +10067,10 @@ local function SolarixSailorPiece()
         if not _G.SolarixSailorAutoSkill then
             return
         end
-        
         local Now = tick()
         if Now - LastSkill < 0.22 then
             return
         end
-        LastSkill = Now
         local Character = GetCharacter()
         local Tool = Character and Character:FindFirstChildOfClass('Tool')
         if not Tool then
@@ -10082,8 +10081,6 @@ local function SolarixSailorPiece()
         end
         local ToolType = GetToolTypeFromModule(Tool.Name)
         for _, Key in ipairs({'Z', 'X', 'C', 'V', 'F'}) do
-            if not _G.SolarixSailorAutoSkill then break end
-            
             if SelectedSkills[Key] then
                 if ToolType == 'Power' then
                     SafeFire(Remotes.UseFruit, 'UseAbility', {
@@ -10096,17 +10093,15 @@ local function SolarixSailorPiece()
                 task.wait(0.25)
             end
         end
+        LastSkill = tick()
     end
-
     local function Attack()
         local Root = GetRoot()
         if not Root then
             return
         end
-    
         EquipWeapon()
         local HitCount = 0
-    
         if PATH.Mobs then
             for _, Npc in ipairs(PATH.Mobs:GetChildren()) do
                 if Npc:IsA('Model') and Alive(Npc) then
@@ -10121,11 +10116,9 @@ local function SolarixSailorPiece()
                 end
             end
         end
-    
-        if HitCount > 0 and _G.SolarixSailorAutoSkill then
+        if HitCount > 0 then
             task.spawn(UseSelectedSkills)
         end
-    
         SafeFire(Remotes.M1)
     end    
     local function TargetPosition(Target)
@@ -10234,6 +10227,66 @@ local function SolarixSailorPiece()
         SafeFire(Remotes.SettingsToggle, 'EnableQuestRepeat', true)
         SafeFire(Remotes.SettingsToggle, 'AutoQuestRepeat', true)
     end
+    local function GetLevelQuestNPC()
+        local Level = GetPlayerLevel()
+        local TargetNPC = nil
+        local TargetLevel = -1
+        local LowestNPC = nil
+        local LowestLevel = math.huge
+        local Repeatable = Modules.Quests and Modules.Quests.RepeatableQuests or {}
+        for NpcId, QuestData in pairs(Repeatable) do
+            local Required = QuestLevel(QuestData or {})
+            local HasMob = QuestData and QuestData.requirements and QuestData.requirements[1] and QuestData.requirements[1].npcType
+            if HasMob and Required > 0 then
+                if Required < LowestLevel then
+                    LowestNPC = NpcId
+                    LowestLevel = Required
+                end
+                if Level >= Required and Required > TargetLevel then
+                    TargetNPC = NpcId
+                    TargetLevel = Required
+                end
+            end
+        end
+        return TargetNPC or LowestNPC or 'QuestNPC1'
+    end
+    local function UpdateQuest()
+        if not _G.SolarixSailorLevelFarm then
+            return nil
+        end
+        EnsureQuestSettings()
+        local TargetNPC = GetLevelQuestNPC()
+        local QuestUI = PlayerGui:FindFirstChild('QuestUI') and PlayerGui.QuestUI:FindFirstChild('Quest')
+        if not QuestUI then
+            SafeFire(Remotes.QuestAccept, TargetNPC)
+            LastTargetName = TargetNPC
+            return TargetNPC
+        end
+        if LastTargetName ~= TargetNPC or not QuestUI.Visible then
+            SafeFire(Remotes.QuestAbandon, 'repeatable')
+            local AbandonTick = 0
+            while _G.SolarixSailorLevelFarm and QuestUI.Visible and AbandonTick < 15 do
+                task.wait(0.2)
+                AbandonTick += 1
+            end
+            if not _G.SolarixSailorLevelFarm then
+                return nil
+            end
+            SafeFire(Remotes.QuestAccept, TargetNPC)
+            local AcceptTick = 0
+            while _G.SolarixSailorLevelFarm and not QuestUI.Visible and AcceptTick < 20 do
+                task.wait(0.2)
+                AcceptTick += 1
+                if AcceptTick % 5 == 0 then
+                    SafeFire(Remotes.QuestAccept, TargetNPC)
+                end
+            end
+            if QuestUI.Visible and _G.SolarixSailorLevelFarm then
+                LastTargetName = TargetNPC
+            end
+        end
+        return _G.SolarixSailorLevelFarm and TargetNPC or nil
+    end
     local function FindNearestByName(Name, BossOnly)
         local Root = GetRoot()
         local Best
@@ -10265,52 +10318,6 @@ local function SolarixSailorPiece()
             return nil
         end
         return QuestData.requirements[1].npcType and CleanName(QuestData.requirements[1].npcType):lower() or nil
-    end
-    local function GetLevelQuestNPC()
-        local Level = GetPlayerLevel()
-        local TargetNPC = nil
-        local TargetLevel = -1
-        local LowestNPC = nil
-        local LowestLevel = math.huge
-        local Repeatable = Modules.Quests and Modules.Quests.RepeatableQuests or {}
-        for NpcId, QuestData in pairs(Repeatable) do
-            local Required = QuestLevel(QuestData or {})
-            local HasMob = QuestData and QuestData.requirements and QuestData.requirements[1] and QuestData.requirements[1].npcType
-            if HasMob and Required > 0 then
-                if Required < LowestLevel then
-                    LowestNPC = NpcId
-                    LowestLevel = Required
-                end
-                if Level >= Required and Required > TargetLevel then
-                    TargetNPC = NpcId
-                    TargetLevel = Required
-                end
-            end
-        end
-        return TargetNPC or LowestNPC or 'QuestNPC1'
-    end
-    local function UpdateQuest()
-        if not _G.SolarixSailorLevelFarm then
-            return nil
-        end
-        EnsureQuestSettings()
-        local TargetNPC = GetLevelQuestNPC()
-        local QuestLine = LocalPlayer:FindFirstChild("PlayerGui") and LocalPlayer.PlayerGui:FindFirstChild("QuestUI") and LocalPlayer.PlayerGui.QuestUI:FindFirstChild("Quest")
-        local HasActiveQuest = QuestLine and QuestLine.Visible
-        if not HasActiveQuest then
-            SafeFire(Remotes.QuestAccept, TargetNPC)
-            LastTargetName = TargetNPC
-            task.wait(0.3)
-            return TargetNPC
-        end
-        if LastTargetName ~= TargetNPC then
-            SafeFire(Remotes.QuestAbandon, 'repeatable')
-            task.wait(0.3)
-            SafeFire(Remotes.QuestAccept, TargetNPC)
-            LastTargetName = TargetNPC
-            task.wait(0.3)
-        end
-        return TargetNPC
     end
     local function FindLevelMob()
         if not _G.SolarixSailorLevelFarm then
@@ -10534,7 +10541,7 @@ local function SolarixSailorPiece()
     })
     Tabs.General:Toggle({
         Title = 'Auto Skill',
-        Value = false,
+        Value = true,
         Callback = function(Value)
             _G.SolarixSailorAutoSkill = Value
         end,
